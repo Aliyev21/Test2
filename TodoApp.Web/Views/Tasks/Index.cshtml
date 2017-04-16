@@ -1,0 +1,93 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Todo List</h2>
+
+<form class="form-inline">
+    <div class="form-group">
+        <input id="task" class="form-control" type="text" />
+    </div>
+    <div class="form-group">
+        <input id="date" class="form-control" type="text" />
+    </div>
+   
+    <button id="add" class="btn btn-primary" type="button">Add</button>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Task</th>
+            <th>Created</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+@section scripts{
+    <script>
+
+        // Data transfer
+        function getAll() {
+            return $.get("/Tasks/GetAll");
+        }
+
+        function addTask(task) {
+            return $.post("/Tasks/Add", { task: task });
+        }
+
+        function removeTask(id) {
+            return $.post("/Tasks/Delete", { id: id });
+        }
+
+        // HTML manipulation
+        function addRows(items) {
+            for (var i = 0; i < items.length; i++) {
+                addRow(items[i], i);
+            }
+        }
+        function addRow(item, i) {
+            var $removeBtn = $("<button>")
+                .addClass('remove btn-xs btn-danger')
+                .text('Remove')
+                .data('id', item.Id);
+
+            var $row = $("<tr>")
+                .append($("<td>").html(i + 1))
+                .append($("<td>").html(item.Name))
+                .append($("<td>").html(item.CreatedDateString))
+                .append($("<td>").html($removeBtn));
+
+            $(".table tbody").append($row);
+        }
+
+        // bindings
+        $('body').on('click', '#add', function () {
+            var task = $('#task').val();
+            addTask(task).success(function (result) {
+                var lastIndex = $(".table tbody tr").length;
+                addRow(result, lastIndex);
+            });
+        });
+
+        $('body').on('click', '.remove', function () {
+            var $btn = $(this);
+            var removeId = $btn.data('id');
+
+            removeTask(removeId).success(function () {
+                $btn.parents('tr').remove();
+            });
+        })
+
+        // DOM ready
+        $(function () {
+            $("#date").datepicker();
+            getAll().success(addRows);
+        });
+
+    </script>
+}
+
